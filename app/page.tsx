@@ -95,7 +95,7 @@ export default function Page() {
             {pages.map((p, i) => (
               <div key={i} className="flex flex-col items-center gap-4 flex-shrink-0">
                 <div className="text-[9px] font-black text-gray-600 uppercase tracking-widest">第 {(i + 1).toString().padStart(2, '0')} 页</div>
-                <TextCanvas ref={el => canvasRefs.current[i] = el} text={p} author={author} fontSize={fontSize} />
+                <TextCanvas ref={(el) => { canvasRefs.current[i] = el; }} text={p} author={author} fontSize={fontSize} />
               </div>
             ))}
           </div>
