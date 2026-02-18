@@ -53,7 +53,7 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white p-4 md:p-8 font-sans selection:bg-[#07c160]/30">
-      {/* 响应式标题：手机端 text-2xl，电脑端 text-4xl */}
+      {/* 响应式标题 */}
       <header className="max-w-[1700px] mx-auto mb-8 md:mb-16 text-center">
         <h1 className="text-2xl md:text-4xl font-black text-[#07c160] tracking-tighter uppercase leading-tight">
           视频号金句图<br className="md:hidden" />AI生成器
@@ -63,7 +63,7 @@ export default function Page() {
 
       <div className="max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-10">
         
-        {/* 左侧：编辑器 (移动端排在最前) */}
+        {/* 左侧：编辑器 */}
         <div className="lg:col-span-3 order-1 space-y-6 bg-[#0d0d0d] p-6 md:p-7 rounded-[32px] md:rounded-[40px] border border-white/5 h-fit lg:sticky lg:top-8 shadow-2xl">
           <div className="space-y-4">
             <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-2">内容编辑器</label>
@@ -85,23 +85,29 @@ export default function Page() {
           </div>
         </div>
 
-        {/* 中间：预览区 (移动端排在第二) */}
+        {/* 中间：预览区 */}
         <div className="lg:col-span-6 order-2 flex flex-col items-center min-w-0">
           <div className="mb-6 py-2 px-6 rounded-full bg-white/5 border border-white/10">
             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">实时预览模式</span>
           </div>
-          {/* 增加 overflow-x-auto 解决超窄屏溢出 */}
           <div className="w-full space-y-16 md:space-y-20 pb-20 md:pb-40 overflow-x-auto scrollbar-hide flex flex-col items-center">
             {pages.map((p, i) => (
               <div key={i} className="flex flex-col items-center gap-4 flex-shrink-0">
                 <div className="text-[9px] font-black text-gray-600 uppercase tracking-widest">第 {(i + 1).toString().padStart(2, '0')} 页</div>
-                <TextCanvas ref={(el) => { canvasRefs.current[i] = el; }} text={p} author={author} fontSize={fontSize} />
+                {/* 核心改动：将 isFirstPage 改为 isCenterPage，并增加对末页的判断 */}
+                <TextCanvas 
+                  ref={(el) => { canvasRefs.current[i] = el; }} 
+                  text={p} 
+                  author={author} 
+                  fontSize={fontSize}
+                  isCenterPage={i === 0 || i === pages.length - 1} 
+                />
               </div>
             ))}
           </div>
         </div>
 
-        {/* 右侧：导出中心 (移动端排在最后) */}
+        {/* 右侧：导出中心 */}
         <div className="lg:col-span-3 order-3">
           <div className="bg-[#0d0d0d] p-6 md:p-8 rounded-[32px] md:rounded-[48px] border border-white/5 lg:sticky lg:top-8 shadow-2xl space-y-8 text-center">
             <div className="grid grid-cols-2 gap-3 md:gap-4">

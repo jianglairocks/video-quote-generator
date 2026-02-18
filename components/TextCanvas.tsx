@@ -7,26 +7,25 @@ interface TextCanvasProps {
   text: string;
   author: string;
   fontSize: number;
+  // 核心改动：属性名从 isFirstPage 改为 isCenterPage
+  isCenterPage?: boolean; 
 }
 
-const TextCanvas = forwardRef(({ text, author, fontSize }: TextCanvasProps, ref) => {
+const TextCanvas = forwardRef(({ text, author, fontSize, isCenterPage }: TextCanvasProps, ref) => {
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  // 强化版 Markdown 解析逻辑：支持引用块 + 两端对齐
+  // Markdown 解析逻辑保持不变
   const parseMarkdown = (md: string, baseSize: number) => {
-    // 预处理：深度清理可能存在的转义换行符残留
     const cleanMd = md.replace(/\\n/g, '\n');
     
     return cleanMd.split('\n').map((line) => {
       const trimmedLine = line.trim();
       if (!trimmedLine) return '<div style="height: 24px;"></div>';
 
-      // 标题
       if (trimmedLine.startsWith('# ')) {
         return `<h1 style="font-size: ${baseSize * 1.4}px; color: #FF9500; font-weight: 800; margin-bottom: 32px; text-align: center; letter-spacing: -0.01em;">${trimmedLine.slice(2)}</h1>`;
       }
 
-      // 引用块 (Blockquote)
       if (trimmedLine.startsWith('> ')) {
         const quoteContent = trimmedLine.slice(2).replace(/\*\*(.*?)\*\*/g, '<strong style="color: #FF9500;">$1</strong>');
         return `<div style="padding-left: 28px; border-left: 5px solid rgba(255,255,255,0.2); margin-bottom: 24px; font-style: italic;">
@@ -34,12 +33,10 @@ const TextCanvas = forwardRef(({ text, author, fontSize }: TextCanvasProps, ref)
                 </div>`;
       }
 
-      // 列表
       if (trimmedLine.startsWith('- ')) {
         return `<p style="font-size: ${baseSize}px; color: #ffffff; margin-bottom: 16px; text-align: left; padding-left: 20px;">• ${trimmedLine.slice(2)}</p>`;
       }
 
-      // 正文实现严格的两端对齐
       let processed = trimmedLine.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #FF9500; font-weight: 700;">$1</strong>');
       return `<p style="font-size: ${baseSize}px; line-height: 1.8; color: #e5e5e5; margin-bottom: 24px; text-align: justify; text-justify: inter-character; word-break: break-all;">${processed}</p>`;
     }).join('');
@@ -50,9 +47,14 @@ const TextCanvas = forwardRef(({ text, author, fontSize }: TextCanvasProps, ref)
       const container = document.createElement('div');
       container.style.cssText = `position: fixed; left: -9999px; width: 1080px; height: 1920px; background: black; font-family: sans-serif;`;
       
+      // 动态布局逻辑：第一页或最后一页居中，中间页靠上
+      const justifyContent = isCenterPage ? 'center' : 'flex-start';
+      const marginTop = isCenterPage ? '0px' : '180px';
+      const paddingBottom = isCenterPage ? '200px' : '0px'; // 居中时为底部署名留出视觉平衡空间
+
       container.innerHTML = `
         <div style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; background: radial-gradient(circle at center, #222222 0%, #000000 100%);">
-          <div style="width: 900px; margin-top: 180px; flex: 1; display: flex; flex-direction: column; justify-content: flex-start; padding-top: 20px;">
+          <div style="width: 900px; flex: 1; display: flex; flex-direction: column; justify-content: ${justifyContent}; margin-top: ${marginTop}; padding-bottom: ${paddingBottom};">
             ${parseMarkdown(text, fontSize)}
           </div>
           <div style="position: absolute; bottom: 120px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
@@ -80,16 +82,19 @@ const TextCanvas = forwardRef(({ text, author, fontSize }: TextCanvasProps, ref)
         className="relative bg-black overflow-hidden rounded-[64px] border-[14px] border-[#1f1f1f] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.9)]"
         style={{ width: '1080px', height: '1920px', transform: 'scale(0.42)', transformOrigin: 'top center', marginBottom: '-1110px' }}
       >
-        {/* 顶部灵动岛装饰 */}
+        {/* 顶部装饰 */}
         <div className="absolute top-[40px] left-1/2 -translate-x-1/2 w-[280px] h-[60px] bg-[#1a1a1a] rounded-full z-[60] flex items-center justify-end px-8">
           <div className="w-2.5 h-2.5 rounded-full bg-blue-500/10 blur-[3px]" />
         </div>
 
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#222222_0%,_#000000_100%)]" />
         
-        <div className="absolute inset-0 flex flex-col items-center px-[90px] pt-[180px]">
-          <div className="w-full flex-1 flex flex-col justify-start pt-[20px]" 
-               dangerouslySetInnerHTML={{ __html: parseMarkdown(text, fontSize) }} />
+        {/* 预览层布局调整：第一页或最后一页居中，中间页靠上 */}
+        <div className={`absolute inset-0 flex flex-col items-center px-[90px] ${isCenterPage ? 'pt-0' : 'pt-[180px]'}`}>
+          <div 
+            className={`w-full flex-1 flex flex-col ${isCenterPage ? 'justify-center pb-[200px]' : 'justify-start pt-[20px]'}`} 
+            dangerouslySetInnerHTML={{ __html: parseMarkdown(text, fontSize) }} 
+          />
           
           <div className="absolute bottom-[120px] flex flex-col items-center gap-6">
             <div className="w-32 h-[1px] bg-white/10" />
