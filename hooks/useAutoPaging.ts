@@ -27,7 +27,7 @@ export const useAutoPaging = (text: string, fontSize: number) => {
       div.style.position = 'absolute';
       div.style.visibility = 'hidden';
       div.style.textAlign = 'justify';
-      div.style.textJustify = 'inter-character';
+      div.style.setProperty('text-justify', 'inter-character');
       
       // 增加对引用格式的高度模拟
       div.innerHTML = content.replace(/^# (.*$)/gm, '<h1 style="font-size:1.4em">$1</h1>')
