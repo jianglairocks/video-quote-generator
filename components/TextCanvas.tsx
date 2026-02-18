@@ -7,36 +7,30 @@ interface TextCanvasProps {
   text: string;
   author: string;
   fontSize: number;
-  // 核心改动：属性名从 isFirstPage 改为 isCenterPage
+  bgColor: string;
   isCenterPage?: boolean; 
 }
 
-const TextCanvas = forwardRef(({ text, author, fontSize, isCenterPage }: TextCanvasProps, ref) => {
+const TextCanvas = forwardRef(({ text, author, fontSize, bgColor, isCenterPage }: TextCanvasProps, ref) => {
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  // Markdown 解析逻辑保持不变
   const parseMarkdown = (md: string, baseSize: number) => {
     const cleanMd = md.replace(/\\n/g, '\n');
-    
     return cleanMd.split('\n').map((line) => {
       const trimmedLine = line.trim();
       if (!trimmedLine) return '<div style="height: 24px;"></div>';
-
       if (trimmedLine.startsWith('# ')) {
         return `<h1 style="font-size: ${baseSize * 1.4}px; color: #FF9500; font-weight: 800; margin-bottom: 32px; text-align: center; letter-spacing: -0.01em;">${trimmedLine.slice(2)}</h1>`;
       }
-
       if (trimmedLine.startsWith('> ')) {
         const quoteContent = trimmedLine.slice(2).replace(/\*\*(.*?)\*\*/g, '<strong style="color: #FF9500;">$1</strong>');
         return `<div style="padding-left: 28px; border-left: 5px solid rgba(255,255,255,0.2); margin-bottom: 24px; font-style: italic;">
                   <p style="font-size: ${baseSize * 0.95}px; line-height: 1.7; color: #aaaaaa; text-align: justify; text-justify: inter-character; margin: 0;">${quoteContent}</p>
                 </div>`;
       }
-
       if (trimmedLine.startsWith('- ')) {
         return `<p style="font-size: ${baseSize}px; color: #ffffff; margin-bottom: 16px; text-align: left; padding-left: 20px;">• ${trimmedLine.slice(2)}</p>`;
       }
-
       let processed = trimmedLine.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #FF9500; font-weight: 700;">$1</strong>');
       return `<p style="font-size: ${baseSize}px; line-height: 1.8; color: #e5e5e5; margin-bottom: 24px; text-align: justify; text-justify: inter-character; word-break: break-all;">${processed}</p>`;
     }).join('');
@@ -45,15 +39,28 @@ const TextCanvas = forwardRef(({ text, author, fontSize, isCenterPage }: TextCan
   useImperativeHandle(ref, () => ({
     download: async (fileName: string) => {
       const container = document.createElement('div');
-      container.style.cssText = `position: fixed; left: -9999px; width: 1080px; height: 1920px; background: black; font-family: sans-serif;`;
+      // 核心修复：多层渐变叠加逻辑
+      // 第一层: 用户的底色 (bgColor)
+      // 第二层: 中心高光 (white 0.15)
+      // 第三层: 边缘暗角 (black 0.4)
+      container.style.cssText = `
+        position: fixed; 
+        left: -9999px; 
+        width: 1080px; 
+        height: 1920px; 
+        background-color: ${bgColor};
+        background-image: 
+          radial-gradient(circle at center, rgba(255,255,255,0.15) 0%, transparent 80%),
+          radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.4) 100%);
+        font-family: sans-serif;
+      `;
       
-      // 动态布局逻辑：第一页或最后一页居中，中间页靠上
       const justifyContent = isCenterPage ? 'center' : 'flex-start';
       const marginTop = isCenterPage ? '0px' : '180px';
-      const paddingBottom = isCenterPage ? '200px' : '0px'; // 居中时为底部署名留出视觉平衡空间
+      const paddingBottom = isCenterPage ? '200px' : '0px';
 
       container.innerHTML = `
-        <div style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; background: radial-gradient(circle at center, #222222 0%, #000000 100%);">
+        <div style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center;">
           <div style="width: 900px; flex: 1; display: flex; flex-direction: column; justify-content: ${justifyContent}; margin-top: ${marginTop}; padding-bottom: ${paddingBottom};">
             ${parseMarkdown(text, fontSize)}
           </div>
@@ -65,7 +72,7 @@ const TextCanvas = forwardRef(({ text, author, fontSize, isCenterPage }: TextCan
       `;
 
       document.body.appendChild(container);
-      const canvas = await html2canvas(container, { width: 1080, height: 1920, scale: 2, useCORS: true, backgroundColor: '#000000' });
+      const canvas = await html2canvas(container, { width: 1080, height: 1920, scale: 2, useCORS: true });
       document.body.removeChild(container);
 
       const link = document.createElement('a');
@@ -79,17 +86,24 @@ const TextCanvas = forwardRef(({ text, author, fontSize, isCenterPage }: TextCan
     <div className="flex justify-center p-4">
       <div 
         ref={canvasRef}
-        className="relative bg-black overflow-hidden rounded-[64px] border-[14px] border-[#1f1f1f] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.9)]"
-        style={{ width: '1080px', height: '1920px', transform: 'scale(0.42)', transformOrigin: 'top center', marginBottom: '-1110px' }}
+        className="relative overflow-hidden rounded-[64px] border-[14px] border-[#1f1f1f] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.9)]"
+        style={{ 
+          width: '1080px', 
+          height: '1920px', 
+          transform: 'scale(0.42)', 
+          transformOrigin: 'top center', 
+          marginBottom: '-1110px',
+          backgroundColor: bgColor,
+          // 预览层同步应用多层渐变
+          backgroundImage: `
+            radial-gradient(circle at center, rgba(255,255,255,0.15) 0%, transparent 80%),
+            radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.4) 100%)
+          `
+        }}
       >
         {/* 顶部装饰 */}
-        <div className="absolute top-[40px] left-1/2 -translate-x-1/2 w-[280px] h-[60px] bg-[#1a1a1a] rounded-full z-[60] flex items-center justify-end px-8">
-          <div className="w-2.5 h-2.5 rounded-full bg-blue-500/10 blur-[3px]" />
-        </div>
-
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#222222_0%,_#000000_100%)]" />
+        <div className="absolute top-[40px] left-1/2 -translate-x-1/2 w-[280px] h-[60px] bg-black/30 backdrop-blur-xl rounded-full z-[60]" />
         
-        {/* 预览层布局调整：第一页或最后一页居中，中间页靠上 */}
         <div className={`absolute inset-0 flex flex-col items-center px-[90px] ${isCenterPage ? 'pt-0' : 'pt-[180px]'}`}>
           <div 
             className={`w-full flex-1 flex flex-col ${isCenterPage ? 'justify-center pb-[200px]' : 'justify-start pt-[20px]'}`} 

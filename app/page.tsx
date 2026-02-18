@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from 'react';
-import { Sparkles, Download, Type, User, Loader2, Ruler, LayoutGrid } from 'lucide-react';
+import { Sparkles, Download, Loader2, Palette } from 'lucide-react';
 import TextCanvas from '@/components/TextCanvas';
 import { useAutoPaging } from '@/hooks/useAutoPaging';
 
@@ -9,8 +9,18 @@ export default function Page() {
   const [text, setText] = useState("# 宇宙的终极思考\n> 如果一件事在逻辑上是可能的，那么在无限的宇宙中，它就必然会发生。\n\n物理学家 **爱因斯坦** 曾对因果律有过深刻的怀疑。正如他在信中写道：“上帝不掷骰子”。这意味着万物皆有其因，每一刻的 **现在** 都是过去所有力量博弈的终点。");
   const [author, setAuthor] = useState("万能的孙同学");
   const [fontSize, setFontSize] = useState(52);
+  const [bgColor, setBgColor] = useState("#000000"); // 新增：背景颜色状态
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+
+  // 推荐色值
+  const presetColors = [
+    { name: '经典黑', value: '#000000' },
+    { name: '深海蓝', value: '#0a192f' },
+    { name: '森林绿', value: '#0b1a10' },
+    { name: '暗酒红', value: '#1a0b0b' },
+    { name: '高级灰', value: '#1a1a1a' },
+  ];
 
   const canvasRefs = useRef<any[]>([]);
   const pages = useAutoPaging(text, fontSize);
@@ -25,12 +35,6 @@ export default function Page() {
         body: JSON.stringify({ text }) 
       });
       const data = await res.json();
-
-      if (res.status === 429) {
-        alert(data.error || "请求过于频繁，请稍后再试");
-        return;
-      }
-
       if (!res.ok) throw new Error(data.error || "优化失败");
       if (data.optimizedText) setText(data.optimizedText);
     } catch (e: any) { 
@@ -53,12 +57,11 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white p-4 md:p-8 font-sans selection:bg-[#07c160]/30">
-      {/* 响应式标题 */}
       <header className="max-w-[1700px] mx-auto mb-8 md:mb-16 text-center">
         <h1 className="text-2xl md:text-4xl font-black text-[#07c160] tracking-tighter uppercase leading-tight">
           视频号金句图<br className="md:hidden" />AI生成器
         </h1>
-        <p className="text-[9px] md:text-[10px] text-gray-600 font-bold tracking-[0.2em] md:tracking-[0.4em] mt-3 uppercase opacity-50">High-End Quote Generator for WeChat</p>
+        <p className="text-[9px] md:text-[10px] text-gray-600 font-bold tracking-[0.4em] mt-3 uppercase opacity-50">High-End Quote Generator for WeChat</p>
       </header>
 
       <div className="max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-10">
@@ -68,14 +71,42 @@ export default function Page() {
           <div className="space-y-4">
             <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-2">内容编辑器</label>
             <textarea 
-              className="w-full h-[300px] md:h-[520px] bg-black border border-white/10 rounded-2xl md:rounded-3xl p-5 text-sm outline-none focus:border-[#07c160] transition-all scrollbar-hide whitespace-pre-wrap" 
+              className="w-full h-[250px] md:h-[400px] bg-black border border-white/10 rounded-2xl p-5 text-sm outline-none focus:border-[#07c160] transition-all scrollbar-hide whitespace-pre-wrap" 
               value={text} 
               onChange={(e) => setText(e.target.value)} 
             />
-            <button onClick={handleOptimize} disabled={isOptimizing} className="w-full py-4 rounded-xl md:rounded-2xl bg-[#07c160]/10 border border-[#07c160]/20 text-[#07c160] text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-95">
+            <button onClick={handleOptimize} disabled={isOptimizing} className="w-full py-4 rounded-xl bg-[#07c160]/10 border border-[#07c160]/20 text-[#07c160] text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-95">
               {isOptimizing ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} AI 智能排版优化
             </button>
           </div>
+
+          {/* 新增：颜色选择模块 */}
+          <div className="pt-6 border-t border-white/5 space-y-4">
+            <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-2">
+              <Palette size={12} /> 背景色彩自定义
+            </label>
+            <div className="flex flex-wrap gap-3">
+              {presetColors.map((color) => (
+                <button
+                  key={color.value}
+                  onClick={() => setBgColor(color.value)}
+                  className={`w-8 h-8 rounded-full border-2 transition-all ${bgColor === color.value ? 'border-[#07c160] scale-110' : 'border-transparent'}`}
+                  style={{ backgroundColor: color.value }}
+                  title={color.name}
+                />
+              ))}
+              {/* 自主勾选色盘 */}
+              <div className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-white/10 hover:border-white/30 transition-all">
+                <input 
+                  type="color" 
+                  value={bgColor} 
+                  onChange={(e) => setBgColor(e.target.value)}
+                  className="absolute -inset-2 w-12 h-12 cursor-pointer bg-transparent"
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="pt-6 border-t border-white/5 space-y-6">
             <input className="w-full bg-black border border-white/10 rounded-xl px-5 py-3 text-sm focus:border-[#07c160] outline-none transition-all" value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="品牌署名" />
             <div className="space-y-4">
@@ -94,12 +125,12 @@ export default function Page() {
             {pages.map((p, i) => (
               <div key={i} className="flex flex-col items-center gap-4 flex-shrink-0">
                 <div className="text-[9px] font-black text-gray-600 uppercase tracking-widest">第 {(i + 1).toString().padStart(2, '0')} 页</div>
-                {/* 核心改动：将 isFirstPage 改为 isCenterPage，并增加对末页的判断 */}
                 <TextCanvas 
                   ref={(el) => { canvasRefs.current[i] = el; }} 
                   text={p} 
                   author={author} 
                   fontSize={fontSize}
+                  bgColor={bgColor} // 传递背景颜色
                   isCenterPage={i === 0 || i === pages.length - 1} 
                 />
               </div>
@@ -124,7 +155,7 @@ export default function Page() {
               {isExporting ? <Loader2 size={24} className="animate-spin" /> : <Download size={24} />} 批量导出金句图
             </button>
             <div className="text-[8px] md:text-[9px] text-gray-700 font-medium leading-relaxed">
-              * 分辨率已锁定 1080x1920 标准物理像素<br/>移动端导出可能较慢，请耐心等待
+              * 分辨率已锁定 1080x1920 标准物理像素<br/>背景色将同步应用于导出图片
             </div>
           </div>
         </div>
