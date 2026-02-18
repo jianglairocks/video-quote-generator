@@ -39,10 +39,6 @@ const TextCanvas = forwardRef(({ text, author, fontSize, bgColor, isCenterPage }
   useImperativeHandle(ref, () => ({
     download: async (fileName: string) => {
       const container = document.createElement('div');
-      // 核心修复：多层渐变叠加逻辑
-      // 第一层: 用户的底色 (bgColor)
-      // 第二层: 中心高光 (white 0.15)
-      // 第三层: 边缘暗角 (black 0.4)
       container.style.cssText = `
         position: fixed; 
         left: -9999px; 
@@ -65,8 +61,8 @@ const TextCanvas = forwardRef(({ text, author, fontSize, bgColor, isCenterPage }
             ${parseMarkdown(text, fontSize)}
           </div>
           <div style="position: absolute; bottom: 120px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
-            <div style="width: 140px; height: 1px; background: rgba(255,255,255,0.15);"></div>
-            <span style="color: #07c160; font-size: 34px; font-weight: 900; letter-spacing: 0.3em;">© ${author || "万能的孙同学"}</span>
+            <div style="width: 140px; height: 1px; background: rgba(255,255,255,0.2);"></div>
+            <span style="color: #e5e5e5; font-size: 34px; font-weight: 900; letter-spacing: 0.3em;">© ${author || "万能的孙同学"}</span>
           </div>
         </div>
       `;
@@ -94,14 +90,12 @@ const TextCanvas = forwardRef(({ text, author, fontSize, bgColor, isCenterPage }
           transformOrigin: 'top center', 
           marginBottom: '-1110px',
           backgroundColor: bgColor,
-          // 预览层同步应用多层渐变
           backgroundImage: `
             radial-gradient(circle at center, rgba(255,255,255,0.15) 0%, transparent 80%),
             radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.4) 100%)
           `
         }}
       >
-        {/* 顶部装饰 */}
         <div className="absolute top-[40px] left-1/2 -translate-x-1/2 w-[280px] h-[60px] bg-black/30 backdrop-blur-xl rounded-full z-[60]" />
         
         <div className={`absolute inset-0 flex flex-col items-center px-[90px] ${isCenterPage ? 'pt-0' : 'pt-[180px]'}`}>
@@ -111,8 +105,10 @@ const TextCanvas = forwardRef(({ text, author, fontSize, bgColor, isCenterPage }
           />
           
           <div className="absolute bottom-[120px] flex flex-col items-center gap-6">
-            <div className="w-32 h-[1px] bg-white/10" />
-            <span className="text-[#07c160] font-bold tracking-[0.2em] text-[34px]">© {author || "万能的孙同学"}</span>
+            {/* 预览区装饰线：半透明白色 */}
+            <div className="w-32 h-[1px] bg-white/20" />
+            {/* 预览区文字：改为淡灰色 */}
+            <span className="text-[#e5e5e5] font-bold tracking-[0.2em] text-[34px]">© {author || "万能的孙同学"}</span>
           </div>
         </div>
       </div>
