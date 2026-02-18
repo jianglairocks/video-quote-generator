@@ -1,3 +1,22 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* 确保 Canvas 容器在黑色背景下清晰 */
+canvas {
+  max-width: 100%;
+  height: auto;
+}
